@@ -1,3 +1,3 @@
 <?php
-header('Location: /app_biblioteca/admin/usuarios/registrarse.php');
+header('Location: /app_biblioteca/registrarse.php');
 exit;
