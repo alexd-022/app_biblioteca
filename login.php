@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/config/conexion.php';
 
-if (!empty($_SESSION['admin_id'])) {
-    header('Location: index.php');
+if (!empty($_SESSION['user_id'])) {
+    header('Location: ' . (($_SESSION['user_role'] ?? '') === 'Admin' ? 'index.php' : 'mi_cuenta.php'));
     exit;
 }
 
@@ -10,16 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $correo = strtolower(trim($_POST['correo'] ?? ''));
     $password = $_POST['password'] ?? '';
-    $stmt = $pdo->prepare('SELECT id_admin, nombre, password_hash FROM administradores WHERE correo = ?');
+    $stmt = $pdo->prepare('SELECT id_usuario, nombre, password_hash, rol FROM usuarios WHERE correo = ?');
     $stmt->execute([$correo]);
-    $admin = $stmt->fetch();
+    $user = $stmt->fetch();
 
-    if ($admin && password_verify($password, $admin['password_hash'])) {
+    if ($user && !empty($user['password_hash']) && password_verify($password, $user['password_hash'])) {
         session_regenerate_id(true);
-        $_SESSION['admin_id'] = (int)$admin['id_admin'];
-        $_SESSION['admin_name'] = $admin['nombre'];
+        $_SESSION['user_id'] = (int)$user['id_usuario'];
+        $_SESSION['user_name'] = $user['nombre'];
+        $_SESSION['user_role'] = $user['rol'];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        header('Location: index.php');
+        header('Location: ' . ($user['rol'] === 'Admin' ? 'index.php' : 'mi_cuenta.php'));
         exit;
     }
     flash('error', 'Correo o contraseña incorrectos.');

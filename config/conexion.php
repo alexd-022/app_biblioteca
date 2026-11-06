@@ -24,12 +24,26 @@ function e($value): string
     return htmlspecialchars((string)($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-function require_login(): void
+function require_authenticated(): void
 {
-    if (empty($_SESSION['admin_id'])) {
+    if (empty($_SESSION['user_id'])) {
         header('Location: login.php');
         exit;
     }
+}
+
+function require_login(): void
+{
+    require_authenticated();
+    if (($_SESSION['user_role'] ?? '') !== 'Admin') {
+        header('Location: mi_cuenta.php');
+        exit;
+    }
+}
+
+function require_admin(): void
+{
+    require_login();
 }
 
 function csrf_token(): string
@@ -66,27 +80,30 @@ function show_flash(): void
 
 function nav(string $current): void
 {
-    $links = [
-        'index.php' => ['Inicio', 'bi-house'],
-        'libros.php' => ['Libros', 'bi-book'],
-        'usuarios.php' => ['Usuarios', 'bi-people'],
-        'prestamos.php' => ['Préstamos', 'bi-arrow-left-right'],
-        'devoluciones.php' => ['Devoluciones', 'bi-arrow-counterclockwise'],
-        'historial.php' => ['Historial', 'bi-clock-history'],
-        'atrasos.php' => ['Atrasos', 'bi-exclamation-triangle'],
-        'admins.php' => ['Administradores', 'bi-shield-lock'],
-    ];
-    echo '<div class="topbar"><a class="brand" href="index.php"><i class="bi bi-book-half"></i> Biblioteca</a><div class="navlinks">';
+    $links = ($_SESSION['user_role'] ?? '') === 'Admin'
+        ? [
+            'index.php' => ['Inicio', 'bi-house'],
+            'libros.php' => ['Libros', 'bi-book'],
+            'usuarios.php' => ['Usuarios', 'bi-people'],
+            'prestamos.php' => ['Préstamos', 'bi-arrow-left-right'],
+            'devoluciones.php' => ['Devoluciones', 'bi-arrow-counterclockwise'],
+            'historial.php' => ['Historial', 'bi-clock-history'],
+            'atrasos.php' => ['Atrasos', 'bi-exclamation-triangle'],
+            'admins.php' => ['Administradores', 'bi-shield-lock'],
+        ]
+        : ['mi_cuenta.php' => ['Mis préstamos', 'bi-person']];
+
+    echo '<div class="topbar"><a class="brand" href="' . (($_SESSION['user_role'] ?? '') === 'Admin' ? 'index.php' : 'mi_cuenta.php') . '"><i class="bi bi-book-half"></i> Biblioteca</a><div class="navlinks">';
     foreach ($links as $href => [$label, $icon]) {
         echo '<a class="nav-item ' . ($current === $href ? 'active' : '') . '" href="' . e($href) . '"><i class="bi ' . e($icon) . '"></i><span>' . e($label) . '</span></a>';
     }
-    echo '</div><div class="account"><span>' . e($_SESSION['admin_name'] ?? 'Administrador') . '</span><form method="post" action="logout.php"><input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '"><button class="btn btn-sm btn-outline-light" type="submit">Salir</button></form></div></div>';
+    echo '</div><div class="account"><span>' . e($_SESSION['user_name'] ?? 'Usuario') . '</span><form method="post" action="logout.php"><input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '"><button class="btn btn-sm btn-outline-light" type="submit">Salir</button></form></div></div>';
 }
 
-function page_start(string $title, string $current, bool $authenticated = true): void
+function page_start(string $title, string $current, bool $authenticated = true, bool $adminOnly = true): void
 {
     if ($authenticated) {
-        require_login();
+        $adminOnly ? require_login() : require_authenticated();
     }
     echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . e($title) . ' | Biblioteca</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link href="assets/css/style.css" rel="stylesheet"></head><body>';
     if ($authenticated) {

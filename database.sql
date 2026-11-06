@@ -5,22 +5,16 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS prestamos;
 DROP TABLE IF EXISTS libros;
 DROP TABLE IF EXISTS usuarios;
-DROP TABLE IF EXISTS administradores;
 SET FOREIGN_KEY_CHECKS = 1;
-
-CREATE TABLE administradores (
-    id_admin INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    correo VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
 
 CREATE TABLE usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     documento VARCHAR(30) NOT NULL UNIQUE,
-    correo VARCHAR(100) NOT NULL
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NULL,
+    rol ENUM('Usuario','Admin') NOT NULL DEFAULT 'Usuario',
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE libros (
@@ -43,11 +37,11 @@ CREATE TABLE prestamos (
     INDEX idx_prestamos_estado_fecha (estado_prestamo, fecha_devolucion)
 ) ENGINE=InnoDB;
 
-INSERT INTO usuarios (nombre, documento, correo) VALUES
-('Ana Gómez', '1001', 'ana@example.com'),
-('Carlos Ruiz', '1002', 'carlos@example.com'),
-('Lucía Pérez', '1003', 'lucia@example.com'),
-('Mateo López', '1004', 'mateo@example.com');
+INSERT INTO usuarios (nombre, documento, correo, rol) VALUES
+('Ana Gómez', '1001', 'ana@example.com', 'Usuario'),
+('Carlos Ruiz', '1002', 'carlos@example.com', 'Usuario'),
+('Lucía Pérez', '1003', 'lucia@example.com', 'Usuario'),
+('Mateo López', '1004', 'mateo@example.com', 'Usuario');
 
 INSERT INTO libros (titulo, autor, categoria, estado) VALUES
 ('Clean Code', 'Robert C. Martin', 'Programación', 'Prestado'),
@@ -62,4 +56,4 @@ INSERT INTO prestamos (id_usuario, id_libro, fecha_prestamo, fecha_devolucion, e
 (2, 1, DATE_SUB(CURDATE(), INTERVAL 12 DAY), DATE_SUB(CURDATE(), INTERVAL 2 DAY), 'Activo'),
 (3, 5, DATE_SUB(CURDATE(), INTERVAL 3 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'Activo');
 
--- El primer administrador se registra desde register.php.
+-- El primer administrador se crea al registrarse. Los siguientes registros serán usuarios.
