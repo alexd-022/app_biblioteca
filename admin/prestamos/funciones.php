@@ -1,0 +1,4 @@
+<?php
+require_once __DIR__ . '/../implements/conexion.php';
+function obtenerPrestamosRecientes(int $limite=10): array { global $pdo; $limite=max(1,min(100,$limite)); return $pdo->query("SELECT p.*,u.nombre usuario,l.titulo libro,IF(p.estado_prestamo='Activo' AND p.fecha_devolucion<CURDATE(),'Atrasado',p.estado_prestamo) estado_vista FROM prestamos p JOIN usuarios u ON u.id_usuario=p.id_usuario JOIN libros l ON l.id_libro=p.id_libro ORDER BY p.id_prestamo DESC LIMIT $limite")->fetchAll(); }
+function obtenerActivos(): array { global $pdo; return $pdo->query("SELECT p.*,u.nombre usuario,l.titulo libro,IF(p.fecha_devolucion<CURDATE(),'Atrasado','Activo') estado_vista FROM prestamos p JOIN usuarios u ON u.id_usuario=p.id_usuario JOIN libros l ON l.id_libro=p.id_libro WHERE p.estado_prestamo='Activo' ORDER BY p.fecha_devolucion")->fetchAll(); }
