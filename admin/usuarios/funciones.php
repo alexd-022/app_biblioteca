@@ -39,11 +39,31 @@ function actualizarUsuario(int $id, string $nombre, string $documento, string $c
 function eliminarUsuario(int $id): bool
 {
     global $pdo;
-    $consulta = $pdo->prepare('SELECT COUNT(*) FROM prestamos WHERE id_usuario = ?');
-    $consulta->execute([$id]);
-    if ((int)$consulta->fetchColumn() > 0) {
-        return false;
+
+    try {
+        $pdo->beginTransaction();
+
+        $consulta = $pdo->prepare("SELECT COUNT(*) FROM prestamos WHERE id_usuario = ? AND estado_prestamo = 'Activo'");
+        $consulta->execute([$id]);
+        if ((int)$consulta->fetchColumn() > 0) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        // Si ya no hay préstamos activos, elimina los registros devueltos para respetar la clave foránea.
+        $consulta = $pdo->prepare("DELETE FROM prestamos WHERE id_usuario = ? AND estado_prestamo = 'Devuelto'");
+        $consulta->execute([$id]);
+
+        $consulta = $pdo->prepare('DELETE FROM usuarios WHERE id_usuario = ?');
+        $consulta->execute([$id]);
+        $eliminado = $consulta->rowCount() === 1;
+
+        $pdo->commit();
+        return $eliminado;
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $exception;
     }
-    $consulta = $pdo->prepare('DELETE FROM usuarios WHERE id_usuario = ?');
-    return $consulta->execute([$id]);
 }
