@@ -87,9 +87,36 @@ function enlaceActivo(string $pagina): string
     return basename($_SERVER['PHP_SELF']) === $pagina ? 'active' : '';
 }
 
+function obtenerEstiloPagina(): string
+{
+    $ruta = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $archivo = basename($ruta);
+    $mapa = [
+        '/index.php' => 'inicio.css',
+        '/log-in.php' => 'login.css',
+        '/registrarse.php' => 'registro.css',
+        '/admin/dashboard.php' => 'dashboard.css',
+        '/admin/libros/listado.php' => 'libros.css',
+        '/admin/usuarios/listado.php' => 'usuarios.css',
+        '/admin/usuarios/crear-usuario.php' => 'usuarios.css',
+        '/admin/usuarios/mi-cuenta.php' => 'mi-cuenta.css',
+        '/admin/prestamos/listado.php' => 'prestamos.css',
+        '/admin/prestamos/devoluciones.php' => 'devoluciones.css',
+        '/admin/prestamos/historial.php' => 'historial.css',
+        '/admin/prestamos/atrasos.php' => 'atrasos.css',
+    ];
+    foreach ($mapa as $sufijo => $estilo) {
+        if (str_ends_with($ruta, $sufijo)) {
+            return $estilo;
+        }
+    }
+    return $archivo === 'mi-cuenta.php' ? 'mi-cuenta.css' : 'dashboard.css';
+}
+
 function iniciarPagina(string $titulo): void
 {
-    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . escapar($titulo) . ' | Biblioteca</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link href="/app_biblioteca/css/estilos.css" rel="stylesheet"></head><body>';
+    $estiloPagina = obtenerEstiloPagina();
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . escapar($titulo) . ' | Biblioteca</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link href="/app_biblioteca/css/estilos.css" rel="stylesheet"><link href="/app_biblioteca/css/' . escapar($estiloPagina) . '" rel="stylesheet"></head><body>';
 }
 
 function barraNavegacion(string $actual): void
